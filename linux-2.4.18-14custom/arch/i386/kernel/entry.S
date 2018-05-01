@@ -650,6 +650,16 @@ ENTRY(sys_call_table)
 	.long SYMBOL_NAME(sys_sched_setaffinity)
 	.long SYMBOL_NAME(sys_sched_getaffinity)
 
+	/* HW2 starts
+	.long SYMBOL_NAME(sys_enable_logging)
+	.long SYMBOL_NAME(sys_disable_logging)
+	.long SYMBOL_NAME(sys_get_logger_records)
+	.long SYMBOL_NAME(sys_start_lottery_scheduler)
+	.long SYMBOL_NAME(sys_start_orig_scheduler)
+	.long SYMBOL_NAME(sys_set_max_tickets)
+
+	HW2 ends */
+
 	.rept NR_syscalls-(.-sys_call_table)/4
 		.long SYMBOL_NAME(sys_ni_syscall)
 	.endr
