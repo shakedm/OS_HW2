@@ -118,6 +118,33 @@
 
 #define BITMAP_SIZE ((((MAX_PRIO+1+7)/8)+sizeof(long)-1)/sizeof(long))
 
+//definetion of bool HW2
+typedef enum bool{false=0,true=1};
+//HW2 cs_log defination
+typedef struct{
+	pid_t prev;
+	pid_t next;
+	int prev_priority;
+	int next_priority;
+	int prev_policy;
+	int next_policy;
+	long switch_time;
+	int n_tickets;
+} cs_log;
+
+//wrapper_logger struct here HW2
+typedef struct _hw2_logger{
+	cs_log* data;
+	int size; 
+	bool log_policy;
+}HW2_logger;
+
+
+//the global variable itself. check if need "extern"
+HW2_logger HW2_log;
+
+//TODO: constructe the tickects distribute, and count.
+
 typedef struct runqueue runqueue_t;
 
 struct prio_array {
@@ -269,6 +296,7 @@ static inline void activate_task(task_t *p, runqueue_t *rq)
 		if (p->sleep_avg > MAX_SLEEP_AVG)
 			p->sleep_avg = MAX_SLEEP_AVG;
 		p->prio = effective_prio(p);
+		//will we change the number of tickets here? HW2
 	}
 	enqueue_task(p, array);
 	rq->nr_running++;
@@ -405,6 +433,7 @@ void wake_up_forked_process(task_t * p)
 		current->sleep_avg = current->sleep_avg * PARENT_PENALTY / 100;
 		p->sleep_avg = p->sleep_avg * CHILD_PENALTY / 100;
 		p->prio = effective_prio(p);
+		//will we change the number of tickets here? HW2
 	}
 	p->cpu = smp_processor_id();
 	activate_task(p, rq);
@@ -465,6 +494,8 @@ static inline task_t * context_switch(task_t *prev, task_t *next)
 	}
 
 	/* Here we just switch the register state and the stack. */
+
+	//TODO: log the switch to our new global variable HW2
 	switch_to(prev, next, prev);
 
 	return prev;
@@ -774,6 +805,7 @@ void scheduler_tick(int user_tick, int system)
 		dequeue_task(p, rq->active);
 		set_tsk_need_resched(p);
 		p->prio = effective_prio(p);
+		//will we change the number of tickets here? HW2
 		p->first_time_slice = 0;
 		p->time_slice = TASK_TIMESLICE(p);
 
@@ -852,7 +884,7 @@ pick_next_task:
 		array = rq->active;
 		rq->expired_timestamp = 0;
 	}
-
+	//here we need to change the way the next tak is chosed HW2
 	idx = sched_find_first_bit(array->bitmap);
 	queue = array->queue + idx;
 	next = list_entry(queue->next, task_t, run_list);
