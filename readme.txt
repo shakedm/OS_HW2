@@ -5,6 +5,7 @@ log:
 2) make the log struct
 3) update the log in context switch
 4) make field for enabling the log
+5) Start the global variabel in init_sched
 
 schedule:
 1) see how to recalculate the time slice when disabling the lottery.

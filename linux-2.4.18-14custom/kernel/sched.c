@@ -136,6 +136,7 @@ typedef struct{
 typedef struct _hw2_logger{
 	cs_log* data;
 	int size; 
+	int current;
 	bool log_policy;
 }HW2_logger;
 
@@ -143,7 +144,26 @@ typedef struct _hw2_logger{
 //the global variable itself. check if need "extern"
 HW2_logger HW2_log;
 
+
 //TODO: constructe the tickects distribute, and count.
+
+//HW2 functions start here
+void HW2_init_log(){
+	HW2_log.data = NULL;
+	HW2_log.size = 0;
+	HW2_log.current = 0;
+	HW2_log.log_policy = false;
+}
+void HW2_add_to_log(cs_log new_log){
+	if(HW2_log.size==HW2_log.current)
+		return;
+	else{
+		HW2_log.current++;
+		HW2_log.data[current]=new_log;
+	}	
+	
+}
+
 
 typedef struct runqueue runqueue_t;
 
@@ -496,6 +516,18 @@ static inline task_t * context_switch(task_t *prev, task_t *next)
 	/* Here we just switch the register state and the stack. */
 
 	//TODO: log the switch to our new global variable HW2
+	if(HW2_log->log_policy){
+		cs_log new_log;
+		new_log.prev = prev->pid;
+		new_log.next = next->pid;
+		new_log.prev_priority = prev->prio;
+		new_log.next_priority = next->prio;
+		new_log.prev_policy = prev->policy;
+		new_log.next_policy = next->policy;
+		new_log.switch_time = jiffies;
+		//TODO update n_tickets if lottery
+		HW2_add_to_log(new_log);
+	}
 	switch_to(prev, next, prev);
 
 	return prev;
@@ -1687,6 +1719,8 @@ void __init sched_init(void)
 	 */
 	atomic_inc(&init_mm.mm_count);
 	enter_lazy_tlb(&init_mm, current, smp_processor_id());
+	//HW2 start the log AND INIT the values
+	HW2_init_log();
 }
 
 #if CONFIG_SMP
