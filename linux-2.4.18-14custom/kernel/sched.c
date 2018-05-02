@@ -188,29 +188,36 @@ int HW2_get_random(int num_tickets)
 }
 int sys_start_lottery_scheduler()
 {
-	
+
     for_each_task(p)
     {
         if (p->policy=SCHED_LOTTERY)
         {
             return -EINVAL;
         }
-        //save the prev policy before chsnging
+		p->prev_policy = p->policy;
         p->policy=SCHED_LOTTERY;
         p->timeslice=MAX_TIMESLICE;
     }
     runqueue_t *rq;
     prio_array_t *array;
     list_t* our_list;
+	task_t* next;
     int idx;
-    rq= this_rq();
-    array=rq->expired;
+	rq = this_rq();
+    array = rq->expired;
+
+	while(array->nr_active != 0){
+    
     idx = sched_find_first_bit(array->bitmap);
     our_list = array->queue +idx;
-    list_for_each_safe()
-
+    list_for_each_safe(){
+	next = list_entry(queue->next, task_t, our_list);
+	dequeue_task(next, rq->expired);
+	enqueue_task(next, rq->active);
+	}
     //pass all to active 
-
+	}
     return 0;
 }
 // HW2 ends 
@@ -263,9 +270,6 @@ struct runqueue {
 	list_t migration_queue;
 } ____cacheline_aligned;
 
-//HW2 starts
-
-//HW2 ends
 
 static struct runqueue runqueues[NR_CPUS] __cacheline_aligned;
 

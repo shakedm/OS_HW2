@@ -453,6 +453,9 @@ struct task_struct {
 
 /* journalling filesystem info */
 	void *journal_info;
+
+	//HW2 field
+	int prev_policy;
 };
 
 /*
