@@ -139,7 +139,19 @@ typedef struct _hw2_logger{
 	int HW2_current;
 	bool log_policy;
 }HW2_logger;
-
+// HW2 starts
+int HW2_get_random(int num_tickets)
+{
+	unsigned int rand;
+	get_random_bytes(&rand, sizeof(rand));
+	rand%=num_tickets;
+	return rand;
+}
+for_each_task(p){
+	p->policy=SCHED_LOTTERY;
+	P->timeslice=MAX_TIMESLICE;
+}
+// HW2 ends 
 
 //the global variable itself. check if need "extern"
 HW2_logger HW2_log;
@@ -190,6 +202,10 @@ struct runqueue {
 	task_t *migration_thread;
 	list_t migration_queue;
 } ____cacheline_aligned;
+
+//HW2 starts
+
+//HW2 ends
 
 static struct runqueue runqueues[NR_CPUS] __cacheline_aligned;
 
