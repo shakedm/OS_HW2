@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <termios.h>
 #include <sys/types.h>
-
+#include <linux/sched.h>
 
 int enable_logging(int size){
 	int __res;

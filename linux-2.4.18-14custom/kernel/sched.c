@@ -26,6 +26,9 @@
 #include <linux/interrupt.h>
 #include <linux/completion.h>
 #include <linux/kernel_stat.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+
 
 /*
  * Convert user-nice values [ -20 ... 0 ... 19 ]
@@ -181,14 +184,15 @@ int sys_get_logger_records(cs_log* user_mem)
 	{
 		return -ENOMEM;
 	}
-	for(i=0; i<HW2_log->HW2_size ; i++)
+	int i=0;
+	for(i=0; i<HW2_log.HW2_size ; i++)
 	{
         copy_to_user(&(user_mem[i]),&(HW2_log.data),sizeof(cs_log));
 	}
 	kfree(HW2_log.data);
 	HW2_log.data=NULL;
-	int num_copied=HW2_log->size;
-	HW2_log->size=0;
+	int num_copied=HW2_log.HW2_size;
+	HW2_log.HW2_size=0;
 	return num_copied;
 }
 
@@ -199,7 +203,7 @@ int HW2_get_random(int num_tickets)
 	rand%=num_tickets;
 	return rand;
 }
-int sys_start_lottery_scheduler()
+/*int sys_start_lottery_scheduler()
 {
 
     for_each_task(p)
@@ -232,7 +236,7 @@ int sys_start_lottery_scheduler()
     //pass all to active 
 	}
     return 0;
-}
+}*/
 // HW2 ends 
 
 

@@ -5,6 +5,7 @@
 
 extern unsigned long event;
 
+
 #include <linux/config.h>
 #include <linux/binfmts.h>
 #include <linux/threads.h>
@@ -29,7 +30,9 @@ extern unsigned long event;
 #include <linux/low-latency.h>
 
 struct exec_domain;
-
+//HW2
+struct cs_log;
+//HW2
 /*
  * cloning flags:
  */
