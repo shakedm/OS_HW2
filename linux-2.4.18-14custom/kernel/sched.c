@@ -139,7 +139,46 @@ typedef struct _hw2_logger{
 	int HW2_current;
 	bool log_policy;
 }HW2_logger;
+
+
+//the global variable itself. check if need "extern"
+HW2_logger HW2_log;
+
+
 // HW2 starts
+int sys_enable_logging(int size){
+	if(HW2_log.log_policy || size<0)
+		return -EINVAL;
+	if(HW2_log.data==NULL){
+		making_the_log:
+		HW2_log.data = kmalloc(size*sizeof(cs_log),GFP_KERNEL);
+		if(!HW2_log.data)
+			return -ENOMEM;
+		else{
+			HW2_log.HW2_size = size;
+			HW2_log.HW2_current = 0;
+			HW2_log.log_policy = true;
+			return 0;
+		}
+	}
+	else{
+		kfree(HW2_log.data);
+		goto making_the_log;
+	}
+		
+}
+int sys_disable_logging(){
+	if(!HW2_log.log_policy)
+		return -EINVAL;
+
+	HW2_log.log_policy = false;
+	return 0;	
+}
+
+int sys_get_logger_records(cs_log* user_mem){
+	
+}
+
 int HW2_get_random(int num_tickets)
 {
 	unsigned int rand;
@@ -147,14 +186,13 @@ int HW2_get_random(int num_tickets)
 	rand%=num_tickets;
 	return rand;
 }
+//need to be on sys call
 for_each_task(p){
 	p->policy=SCHED_LOTTERY;
 	P->timeslice=MAX_TIMESLICE;
 }
 // HW2 ends 
 
-//the global variable itself. check if need "extern"
-HW2_logger HW2_log;
 
 
 //TODO: constructe the tickects distribute, and count.
