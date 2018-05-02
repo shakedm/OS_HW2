@@ -119,7 +119,7 @@
 #define BITMAP_SIZE ((((MAX_PRIO+1+7)/8)+sizeof(long)-1)/sizeof(long))
 
 //definetion of bool HW2
-typedef enum bool{false=0,true=1};
+typedef enum{false,true} bool;
 //HW2 cs_log defination
 typedef struct{
 	pid_t prev;
@@ -135,8 +135,8 @@ typedef struct{
 //wrapper_logger struct here HW2
 typedef struct _hw2_logger{
 	cs_log* data;
-	int size; 
-	int current;
+	int HW2_size; 
+	int HW2_current;
 	bool log_policy;
 }HW2_logger;
 // HW2 starts
@@ -162,16 +162,16 @@ HW2_logger HW2_log;
 //HW2 functions start here
 void HW2_init_log(){
 	HW2_log.data = NULL;
-	HW2_log.size = 0;
-	HW2_log.current = 0;
+	HW2_log.HW2_size = 0;
+	HW2_log.HW2_current = 0;
 	HW2_log.log_policy = false;
 }
 void HW2_add_to_log(cs_log new_log){
-	if(HW2_log.size==HW2_log.current)
+	if(HW2_log.HW2_size==HW2_log.HW2_current)
 		return;
 	else{
-		HW2_log.current++;
-		HW2_log.data[current]=new_log;
+		HW2_log.HW2_current++;
+		HW2_log.data[HW2_log.HW2_current]=new_log;
 	}	
 	
 }
@@ -532,7 +532,7 @@ static inline task_t * context_switch(task_t *prev, task_t *next)
 	/* Here we just switch the register state and the stack. */
 
 	//TODO: log the switch to our new global variable HW2
-	if(HW2_log->log_policy){
+	if(HW2_log.log_policy){
 		cs_log new_log;
 		new_log.prev = prev->pid;
 		new_log.next = next->pid;
