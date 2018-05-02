@@ -175,8 +175,21 @@ int sys_disable_logging(){
 	return 0;	
 }
 
-int sys_get_logger_records(cs_log* user_mem){
-
+int sys_get_logger_records(cs_log* user_mem)
+{
+	if (user_mem==NULL)
+	{
+		return -ENOMEM;
+	}
+	for(i=0; i<HW2_log->HW2_size ; i++)
+	{
+        copy_to_user(&(user_mem[i]),&(HW2_log.data),sizeof(cs_log));
+	}
+	kfree(HW2_log.data);
+	HW2_log.data=NULL;
+	int num_copied=HW2_log->size;
+	HW2_log->size=0;
+	return num_copied;
 }
 
 int HW2_get_random(int num_tickets)
