@@ -150,7 +150,7 @@ HW2_logger HW2_log;
 
 // HW2 starts
 int sys_enable_logging(int size){
-	if(HW2_log.log_policy || size<0)
+	if(HW2_log.log_policy==true || size<0)
 		return -EINVAL;
 	if(HW2_log.data==NULL){
 		making_the_log:
@@ -185,14 +185,14 @@ int sys_get_logger_records(cs_log* user_mem)
 		return -ENOMEM;
 	}
 	int i=0;
-	for(i=0; i<HW2_log.HW2_size ; i++)
+	for(i=0; i<HW2_log.HW2_current ; i++)
 	{
-        copy_to_user(&(user_mem[i]),&(HW2_log.data),sizeof(cs_log));
+        copy_to_user(&(user_mem[i]),HW2_log.data,sizeof(cs_log));
 	}
 	kfree(HW2_log.data);
 	HW2_log.data=NULL;
-	int num_copied=HW2_log.HW2_size;
-	HW2_log.HW2_size=0;
+	int num_copied=HW2_log.HW2_current;
+	HW2_log.HW2_current=0;
 	return num_copied;
 }
 

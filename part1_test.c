@@ -1,7 +1,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <sched.h>
-
+#include <stdio.h>
 #include "hw2_syscalls.h"
 #include "test_utilities.h"
 
@@ -14,7 +14,14 @@
 
 bool test_enable_logging() {
 	// size < 0
-	ASSERT_TEST(enable_logging(-3) == -1 && errno == EINVAL);
+	printf("blabla");
+	int xx=enable_logging(-3);
+	printf("res=%d",xx);
+	printf("res=%d", errno);
+
+	ASSERT_TEST(enable_logging(-3) == -1);
+	ASSERT_TEST(errno == EINVAL);
+	
 	
 	// success
 	ASSERT_TEST(enable_logging(0) == 0);
@@ -70,6 +77,8 @@ bool test_get_logger_records() {
 
 	ASSERT_TEST(disable_logging() == 0);
 	ASSERT_TEST(get_logger_records(log) == 2);
+	printf("log0_prev: %d ",log[0].prev);
+	printf("parent_pid: %d ",parent_pid);
 	ASSERT_TEST(log[0].prev == parent_pid);
 	ASSERT_TEST(log[0].next == first_child_pid);
 	ASSERT_TEST(log[0].prev_priority == 79);

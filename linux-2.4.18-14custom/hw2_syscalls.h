@@ -96,9 +96,4 @@ void set_max_tickets(int max_tickets){
 		: "0" (248), "b" (max_tickets)
 		:"memory"
 		);
-	if ((__res) < 0){
-		errno = (-__res);
-		return -1;
-	}
-	return ;
 }
