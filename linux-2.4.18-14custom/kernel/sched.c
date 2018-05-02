@@ -218,7 +218,7 @@ int HW2_get_random(int num_tickets)
     }
     runqueue_t *rq;
     prio_array_t *array;
-    list_t* our_list;
+    list_t* our_list , *pos, *n;
 	task_t* next;
     int idx;
 	rq = this_rq();
@@ -228,12 +228,13 @@ int HW2_get_random(int num_tickets)
     
     idx = sched_find_first_bit(array->bitmap);
     our_list = array->queue +idx;
-    list_for_each_safe(){
-	next = list_entry(queue->next, task_t, our_list);
+	
+    list_for_each_safe(pos,n,our_list){ 
+	next = list_entry(pos->next, task_t, our_list);
 	dequeue_task(next, rq->expired);
 	enqueue_task(next, rq->active);
 	}
-    //pass all to active 
+    
 	}
     return 0;
 }*/
