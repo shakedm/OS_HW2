@@ -176,7 +176,7 @@ int sys_disable_logging(){
 }
 
 int sys_get_logger_records(cs_log* user_mem){
-	
+
 }
 
 int HW2_get_random(int num_tickets)
@@ -186,10 +186,32 @@ int HW2_get_random(int num_tickets)
 	rand%=num_tickets;
 	return rand;
 }
-//need to be on sys call
-for_each_task(p){
-	p->policy=SCHED_LOTTERY;
-	P->timeslice=MAX_TIMESLICE;
+int sys_start_lottery_scheduler()
+{
+	
+    for_each_task(p)
+    {
+        if (p->policy=SCHED_LOTTERY)
+        {
+            return -EINVAL;
+        }
+        //save the prev policy before chsnging
+        p->policy=SCHED_LOTTERY;
+        p->timeslice=MAX_TIMESLICE;
+    }
+    runqueue_t *rq;
+    prio_array_t *array;
+    list_t* our_list;
+    int idx;
+    rq= this_rq();
+    array=rq->expired;
+    idx = sched_find_first_bit(array->bitmap);
+    our_list = array->queue +idx;
+    list_for_each_safe()
+
+    //pass all to active 
+
+    return 0;
 }
 // HW2 ends 
 
@@ -2030,29 +2052,3 @@ struct low_latency_enable_struct __enable_lowlatency = { 0, };
 
 #endif	/* LOWLATENCY_NEEDED */
 
-int sys_start_lottery_scheduler()
-{
-    for_each_task(p)
-    {
-        if (p->policy=SCHED_LOTTERY)
-        {
-            return -EINVAL;
-        }
-        //save the prev policy before chsnging
-        p->policy=SCHED_LOTTERY;
-        p->timeslice=MAX_TIMESLICE;
-    }
-    runqueue_t *rq;
-    prio_array_t *array;
-    list_t* our_list;
-    int idx;
-    rq= this_rq();
-    array=rq->expired;
-    idx = sched_find_first_bit(array->bitmap);
-    our_list = array->queue +idx;
-    list_for_each_safe()
-
-    //pass all to active 
-
-    return 0;
-}
