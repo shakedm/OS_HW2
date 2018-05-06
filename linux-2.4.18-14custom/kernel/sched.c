@@ -511,7 +511,6 @@ static inline task_t * context_switch(task_t *prev, task_t *next)
 
 	/* Here we just switch the register state and the stack. */
 
-	//TODO: log the switch to our new global variable HW2
 	if(HW2_log.log_policy){
 		cs_log new_log;
 		new_log.prev = prev->pid;
@@ -521,7 +520,9 @@ static inline task_t * context_switch(task_t *prev, task_t *next)
 		new_log.prev_policy = prev->policy;
 		new_log.next_policy = next->policy;
 		new_log.switch_time = jiffies;
-		//TODO update n_tickets if lottery
+		if(prev->policy==SCHED_LOTTERY)
+			new_log.n_tickets = HW2_NT;
+		
 		HW2_add_to_log(new_log);
 	}
 	switch_to(prev, next, prev);
@@ -2093,11 +2094,6 @@ int sys_start_lottery_scheduler()
 	}
     return 0;
 }
-// HW2 ends 
-
-
-
-//TODO: constructe the tickects distribute, and count.
 
 //HW2 functions start here
 void HW2_init_log(){
@@ -2118,17 +2114,17 @@ void HW2_add_to_log(cs_log new_log){
 //this func finds and returns the winning task in O(1)+k 
 task_t* winning_task(int num){
 	runqueue_t* rq;
-	prio_array_t* active;
+	prio_array_t* array;
 	list_t* our_list;
 	rq = this_rq();
-	active = rq->active;
+	array = rq->active;
 	int sum=0;
 	int idx, prio, i;
-	idx = sched_find_first_bit(active->bitmap);
-	for(i=idx, i<MAX_PRIO; i++){
+	idx = sched_find_first_bit(array->bitmap);
+	for(i=idx; i<MAX_PRIO; i++){
 		prio= (array->nr_run_per_list[i])*(MAX_PRIO-i);
 		if(sum+prio>num){
-			our_list=array->queue[i]->next;
+			our_list= array->queue[i].next;
 			while(sum<num){
 				our_list=our_list->next;
 				sum+=(MAX_PRIO-i);
@@ -2139,7 +2135,6 @@ task_t* winning_task(int num){
 			sum+=prio;
 		}
 	}
-	//TODO: could be that the last firld is wrong, check the syntax of list_entry
 	return list_entry(our_list,task_t,run_list);
 
 }
