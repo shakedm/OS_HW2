@@ -251,6 +251,7 @@ static inline void dequeue_task(struct task_struct *p, prio_array_t *array)
 	array->nr_active--;
 	//HW2 change here
 	array->nr_run_per_list[p->prio]--;
+	HW2_NT-= (MAX_PRIO-p->prio);
 	list_del(&p->run_list);
 	if (list_empty(array->queue + p->prio))
 		__clear_bit(p->prio, array->bitmap);
@@ -263,6 +264,8 @@ static inline void enqueue_task(struct task_struct *p, prio_array_t *array)
 	array->nr_active++;
 	//HW2 change here
 	array->nr_run_per_list[p->prio]++;
+	HW2_NT+= (MAX_PRIO-p->prio);
+
 	p->array = array;
 }
 
@@ -909,11 +912,14 @@ pick_next_task:
 		array = rq->active;
 		rq->expired_timestamp = 0;
 	}
-	//here we need to change the way the next tak is chosed HW2
+	//here we need to change the way the next task is chosed HW2
+	if(current->policy == SCHED_LOTTERY){
+		next = winning_task(HW2_get_random());
+	}else{
 	idx = sched_find_first_bit(array->bitmap);
 	queue = array->queue + idx;
 	next = list_entry(queue->next, task_t, run_list);
-
+	}
 switch_tasks:
 	prefetch(next);
 	clear_tsk_need_resched(prev);
@@ -2018,18 +2024,38 @@ int sys_get_logger_records(cs_log* user_mem)
 	return num_copied;
 }
 
-int HW2_get_random(int num_tickets)
+int HW2_get_random()
 {
 	unsigned int rand;
 	get_random_bytes(&rand, sizeof(rand));
 	if(HW2_SET_NT<0){
-		rand%=num_tickets;
+		rand%=HW2_NT;
 	}
 	else{
-		
+		if(HW2_SET_NT < HW2_NT){
+			rand% = HW2_SET_NT;
+		}
+		else{
+			rand% = HW2_NT;
+		}
 	}
 	return rand;
 }
+int sys_start_orig_scheduler(){
+	task_t* p = current;
+	if(p->policy != SCHED_LOTTERY)
+		return -EINVAL;
+
+	for_each_task(p){
+		p->policy = p->prev_policy;
+		p->time_slice = TASK_TIMESLICE(p);
+	}
+	return 0;
+}
+void sys_set_max_tickets(int max_tickets){
+	HW2_SET_NT = max_tickets;
+}
+
 int sys_start_lottery_scheduler()
 {
 	task_t* p = current;
