@@ -654,9 +654,9 @@ ENTRY(sys_call_table)
 	.long SYMBOL_NAME(sys_enable_logging)
 	.long SYMBOL_NAME(sys_disable_logging)
 	.long SYMBOL_NAME(sys_get_logger_records)
-	//.long SYMBOL_NAME(sys_start_lottery_scheduler)
-	//.long SYMBOL_NAME(sys_start_orig_scheduler)
-	//.long SYMBOL_NAME(sys_set_max_tickets)
+	.long SYMBOL_NAME(sys_start_lottery_scheduler)
+	.long SYMBOL_NAME(sys_start_orig_scheduler)
+	.long SYMBOL_NAME(sys_set_max_tickets)
 
 	
 

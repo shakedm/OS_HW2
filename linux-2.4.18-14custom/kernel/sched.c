@@ -2031,14 +2031,14 @@ int HW2_get_random()
 	unsigned int rand;
 	get_random_bytes(&rand, sizeof(rand));
 	if(HW2_SET_NT<0){
-		rand%=HW2_NT;
+		rand %=HW2_NT;
 	}
 	else{
 		if(HW2_SET_NT < HW2_NT){
-			rand% = HW2_SET_NT;
+			rand %= HW2_SET_NT;
 		}
 		else{
-			rand% = HW2_NT;
+			rand %= HW2_NT;
 		}
 	}
 	return rand;
@@ -2089,7 +2089,7 @@ int sys_start_lottery_scheduler()
 	dequeue_task(next, rq->expired);
 	enqueue_task(next, rq->active);
 	}
-    
+    schedule();
 	}
     return 0;
 }
