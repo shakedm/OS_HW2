@@ -1203,6 +1203,8 @@ static int setscheduler(pid_t pid, int policy, struct sched_param *param)
 
 	if (!param || pid < 0)
 		goto out_nounlock;
+	if(find_process_by_pid(pid)->policy == SCHED_LOTTERY)
+		goto out_nounlock;	
 
 	retval = -EFAULT;
 	if (copy_from_user(&lp, param, sizeof(struct sched_param)))
