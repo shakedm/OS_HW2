@@ -145,132 +145,20 @@ typedef struct _hw2_logger{
 
 
 //the global variable itself. check if need "extern"
+//also global are the tickets fields.
 HW2_logger HW2_log;
+int HW2_NT;
+int HW2_SET_NT;
 
 
-<<<<<<< HEAD
-=======
-// HW2 starts
-int sys_enable_logging(int size){
-	if(HW2_log.log_policy==true || size<0)
-		return -EINVAL;
-	if(HW2_log.data==NULL){
-		making_the_log:
-		HW2_log.data = kmalloc(size*sizeof(cs_log),GFP_KERNEL);
-		if(!HW2_log.data)
-			return -ENOMEM;
-		else{
-			HW2_log.HW2_size = size;
-			HW2_log.HW2_current = 0;
-			HW2_log.log_policy = true;
-			return 0;
-		}
-	}
-	else{
-		kfree(HW2_log.data);
-		goto making_the_log;
-	}
-		
-}
-int sys_disable_logging(){
-	if(!HW2_log.log_policy)
-		return -EINVAL;
-
-	HW2_log.log_policy = false;
-	return 0;	
-}
-
-int sys_get_logger_records(cs_log* user_mem)
-{
-	if (user_mem==NULL)
-	{
-		return -ENOMEM;
-	}
-	int i=0;
-	for(i=0; i<HW2_log.HW2_current ; i++)
-	{
-        copy_to_user(&(user_mem[i]),HW2_log.data,sizeof(cs_log));
-	}
-	kfree(HW2_log.data);
-	HW2_log.data=NULL;
-	int num_copied=HW2_log.HW2_current;
-	HW2_log.HW2_current=0;
-	return num_copied;
-}
-
-int HW2_get_random(int num_tickets)
-{
-	unsigned int rand;
-	get_random_bytes(&rand, sizeof(rand));
-	rand%=num_tickets;
-	return rand;
-}
-/*int sys_start_lottery_scheduler()
-{
-
-    for_each_task(p)
-    {
-        if (p->policy=SCHED_LOTTERY)
-        {
-            return -EINVAL;
-        }
-		p->prev_policy = p->policy;
-        p->policy=SCHED_LOTTERY;
-        p->timeslice=MAX_TIMESLICE;
-    }
-    runqueue_t *rq;
-    prio_array_t *array;
-    list_t* our_list , *pos, *n;
-	task_t* next;
-    int idx;
-	rq = this_rq();
-    array = rq->expired;
-
-	while(array->nr_active != 0){
-    
-    idx = sched_find_first_bit(array->bitmap);
-    our_list = array->queue +idx;
-	
-    list_for_each_safe(pos,n,our_list){ 
-	next = list_entry(pos->next, task_t, our_list);
-	dequeue_task(next, rq->expired);
-	enqueue_task(next, rq->active);
-	}
-    
-	}
-    return 0;
-}*/
-// HW2 ends 
-
-
-
-//TODO: constructe the tickects distribute, and count.
-
-//HW2 functions start here
-void HW2_init_log(){
-	HW2_log.data = NULL;
-	HW2_log.HW2_size = 0;
-	HW2_log.HW2_current = 0;
-	HW2_log.log_policy = false;
-}
-void HW2_add_to_log(cs_log new_log){
-	if(HW2_log.HW2_size==HW2_log.HW2_current)
-		return;
-	else{
-		HW2_log.HW2_current++;
-		HW2_log.data[HW2_log.HW2_current]=new_log;
-	}	
-	
-}
-
-
->>>>>>> origin/master
 typedef struct runqueue runqueue_t;
 
 struct prio_array {
 	int nr_active;
 	unsigned long bitmap[BITMAP_SIZE];
 	list_t queue[MAX_PRIO];
+	//HW2 field for counting the tasks in ech list
+	int nr_run_per_list[MAX_PRIO];
 };
 
 /*
@@ -361,6 +249,8 @@ static inline void rq_unlock(runqueue_t *rq)
 static inline void dequeue_task(struct task_struct *p, prio_array_t *array)
 {
 	array->nr_active--;
+	//HW2 change here
+	array->nr_run_per_list[p->prio]--;
 	list_del(&p->run_list);
 	if (list_empty(array->queue + p->prio))
 		__clear_bit(p->prio, array->bitmap);
@@ -371,6 +261,8 @@ static inline void enqueue_task(struct task_struct *p, prio_array_t *array)
 	list_add_tail(&p->run_list, array->queue + p->prio);
 	__set_bit(p->prio, array->bitmap);
 	array->nr_active++;
+	//HW2 change here
+	array->nr_run_per_list[p->prio]++;
 	p->array = array;
 }
 
@@ -1796,6 +1688,8 @@ void __init sched_init(void)
 			for (k = 0; k < MAX_PRIO; k++) {
 				INIT_LIST_HEAD(array->queue + k);
 				__clear_bit(k, array->bitmap);
+				//HW2 init the nr of tasks 
+				array->nr_run_per_list[k]=0;
 			}
 			// delimiter for bitsearch
 			__set_bit(MAX_PRIO, array->bitmap);
@@ -1822,6 +1716,8 @@ void __init sched_init(void)
 	enter_lazy_tlb(&init_mm, current, smp_processor_id());
 	//HW2 start the log AND INIT the values
 	HW2_init_log();
+	HW2_NT = 0;
+	HW2_SET_NT = -1;
 }
 
 #if CONFIG_SMP
@@ -2080,8 +1976,8 @@ int sys_enable_logging(int size){
 	if(HW2_log.log_policy || size<0)
 		return -EINVAL;
 	if(HW2_log.data==NULL){
-		making_the_log:
-		HW2_log.data = kmalloc(size*sizeof(cs_log),GFP_KERNEL);
+making_the_log:
+		HW2_log.data = kmalloc(size *(sizeof(cs_log)),GFP_KERNEL);
 		if(!HW2_log.data)
 			return -ENOMEM;
 		else{
@@ -2112,14 +2008,13 @@ int sys_get_logger_records(cs_log* user_mem)
 		return -ENOMEM;
 	}
 	int i=0;
-	for(i=0; i<HW2_log.HW2_size ; i++)
+	for(i=0; i<HW2_log.HW2_current ; i++)
 	{
         copy_to_user(&(user_mem[i]),&(HW2_log.data[i]),sizeof(cs_log));
 	}
 	
-	HW2_log.data=NULL;
-	int num_copied=HW2_log.HW2_size;
-	HW2_log.HW2_size=0;
+	int num_copied=HW2_log.HW2_current;
+	HW2_log.HW2_current=0;
 	return num_copied;
 }
 
@@ -2127,7 +2022,12 @@ int HW2_get_random(int num_tickets)
 {
 	unsigned int rand;
 	get_random_bytes(&rand, sizeof(rand));
-	rand%=num_tickets;
+	if(HW2_SET_NT<0){
+		rand%=num_tickets;
+	}
+	else{
+		
+	}
 	return rand;
 }
 int sys_start_lottery_scheduler()
@@ -2135,7 +2035,7 @@ int sys_start_lottery_scheduler()
 	task_t* p = current;
 	if (p->policy == SCHED_LOTTERY)
             return -EINVAL;
-        
+      //TODO HW2 locks where needed!  
     for_each_task(p)
     {
         
@@ -2182,12 +2082,12 @@ void HW2_add_to_log(cs_log new_log){
 	if(HW2_log.HW2_size==HW2_log.HW2_current)
 		return;
 	else{
-		HW2_log.HW2_current++;
 		HW2_log.data[HW2_log.HW2_current]=new_log;
+		HW2_log.HW2_current++;
 	}	
 	
 }
-
+//this func finds and returns the winning task in O(1)+k 
 task_t* winning_task(int num){
 	runqueue_t* rq;
 	prio_array_t* active;
@@ -2195,11 +2095,24 @@ task_t* winning_task(int num){
 	rq = this_rq();
 	active = rq->active;
 	int sum=0;
-	int idx, prio;
+	int idx, prio, i;
 	idx = sched_find_first_bit(active->bitmap);
-	while(sum < num){
-		//field that counts how many processes are in every prio
+	for(i=idx, i<MAX_PRIO; i++){
+		prio= (array->nr_run_per_list[i])*(MAX_PRIO-i);
+		if(sum+prio>num){
+			our_list=array->queue[i]->next;
+			while(sum<num){
+				our_list=our_list->next;
+				sum+=(MAX_PRIO-i);
+			}
+			break;
+		}
+		else{
+			sum+=prio;
+		}
 	}
+	//TODO: could be that the last firld is wrong, check the syntax of list_entry
+	return list_entry(our_list,task_t,run_list);
 
 }
 

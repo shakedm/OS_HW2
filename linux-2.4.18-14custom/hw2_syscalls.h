@@ -1,3 +1,6 @@
+#ifndef _HW2_syscalls
+#define _HW2_syscalls
+
 #include <errno.h>
 #include <termios.h>
 #include <sys/types.h>
@@ -97,3 +100,5 @@ void set_max_tickets(int max_tickets){
 		:"memory"
 		);
 }
+#endif
+
