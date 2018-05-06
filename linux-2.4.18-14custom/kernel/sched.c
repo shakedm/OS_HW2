@@ -292,6 +292,8 @@ static inline int effective_prio(task_t *p)
 		prio = MAX_RT_PRIO;
 	if (prio > MAX_PRIO-1)
 		prio = MAX_PRIO-1;
+
+	HW2_NT += (p->prio-prio);	
 	return prio;
 }
 
@@ -2046,13 +2048,18 @@ int HW2_get_random()
 }
 int sys_start_orig_scheduler(){
 	task_t* p = current;
+	runqueue_t* rq;
+
+	
 	if(p->policy != SCHED_LOTTERY)
 		return -EINVAL;
-
+	rq=this_rq();//check if lock
+	rq->expired_timestamp = 0;
 	for_each_task(p){
 		p->policy = p->prev_policy;
 		p->time_slice = TASK_TIMESLICE(p);
 	}
+	//TODO check for unlock
 	return 0;
 }
 void sys_set_max_tickets(int max_tickets){
