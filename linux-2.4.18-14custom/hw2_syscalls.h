@@ -1,7 +1,17 @@
 #include <errno.h>
 #include <termios.h>
 #include <sys/types.h>
-#include <linux/sched.h>
+
+typedef struct{
+	pid_t prev;
+	pid_t next;
+	int prev_priority;
+	int next_priority;
+	int prev_policy;
+	int next_policy;
+	long switch_time;
+	int n_tickets;
+} cs_log;
 
 int enable_logging(int size){
 	int __res;
@@ -86,9 +96,4 @@ void set_max_tickets(int max_tickets){
 		: "0" (248), "b" (max_tickets)
 		:"memory"
 		);
-	if ((__res) < 0){
-		errno = (-__res);
-		return -1;
-	}
-	return ;
 }

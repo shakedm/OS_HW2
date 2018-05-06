@@ -148,6 +148,123 @@ typedef struct _hw2_logger{
 HW2_logger HW2_log;
 
 
+<<<<<<< HEAD
+=======
+// HW2 starts
+int sys_enable_logging(int size){
+	if(HW2_log.log_policy==true || size<0)
+		return -EINVAL;
+	if(HW2_log.data==NULL){
+		making_the_log:
+		HW2_log.data = kmalloc(size*sizeof(cs_log),GFP_KERNEL);
+		if(!HW2_log.data)
+			return -ENOMEM;
+		else{
+			HW2_log.HW2_size = size;
+			HW2_log.HW2_current = 0;
+			HW2_log.log_policy = true;
+			return 0;
+		}
+	}
+	else{
+		kfree(HW2_log.data);
+		goto making_the_log;
+	}
+		
+}
+int sys_disable_logging(){
+	if(!HW2_log.log_policy)
+		return -EINVAL;
+
+	HW2_log.log_policy = false;
+	return 0;	
+}
+
+int sys_get_logger_records(cs_log* user_mem)
+{
+	if (user_mem==NULL)
+	{
+		return -ENOMEM;
+	}
+	int i=0;
+	for(i=0; i<HW2_log.HW2_current ; i++)
+	{
+        copy_to_user(&(user_mem[i]),HW2_log.data,sizeof(cs_log));
+	}
+	kfree(HW2_log.data);
+	HW2_log.data=NULL;
+	int num_copied=HW2_log.HW2_current;
+	HW2_log.HW2_current=0;
+	return num_copied;
+}
+
+int HW2_get_random(int num_tickets)
+{
+	unsigned int rand;
+	get_random_bytes(&rand, sizeof(rand));
+	rand%=num_tickets;
+	return rand;
+}
+/*int sys_start_lottery_scheduler()
+{
+
+    for_each_task(p)
+    {
+        if (p->policy=SCHED_LOTTERY)
+        {
+            return -EINVAL;
+        }
+		p->prev_policy = p->policy;
+        p->policy=SCHED_LOTTERY;
+        p->timeslice=MAX_TIMESLICE;
+    }
+    runqueue_t *rq;
+    prio_array_t *array;
+    list_t* our_list , *pos, *n;
+	task_t* next;
+    int idx;
+	rq = this_rq();
+    array = rq->expired;
+
+	while(array->nr_active != 0){
+    
+    idx = sched_find_first_bit(array->bitmap);
+    our_list = array->queue +idx;
+	
+    list_for_each_safe(pos,n,our_list){ 
+	next = list_entry(pos->next, task_t, our_list);
+	dequeue_task(next, rq->expired);
+	enqueue_task(next, rq->active);
+	}
+    
+	}
+    return 0;
+}*/
+// HW2 ends 
+
+
+
+//TODO: constructe the tickects distribute, and count.
+
+//HW2 functions start here
+void HW2_init_log(){
+	HW2_log.data = NULL;
+	HW2_log.HW2_size = 0;
+	HW2_log.HW2_current = 0;
+	HW2_log.log_policy = false;
+}
+void HW2_add_to_log(cs_log new_log){
+	if(HW2_log.HW2_size==HW2_log.HW2_current)
+		return;
+	else{
+		HW2_log.HW2_current++;
+		HW2_log.data[HW2_log.HW2_current]=new_log;
+	}	
+	
+}
+
+
+>>>>>>> origin/master
 typedef struct runqueue runqueue_t;
 
 struct prio_array {
