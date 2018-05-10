@@ -264,7 +264,7 @@ static inline void enqueue_task(struct task_struct *p, prio_array_t *array)
 	array->nr_active++;
 	//HW2 change here
 	array->nr_run_per_list[p->prio]++;
-	HW2_NT+= (MAX_PRIO-p->prio);
+	HW2_NT+= (MAX_PRIO - p->prio);
 
 	p->array = array;
 }
@@ -292,8 +292,7 @@ static inline int effective_prio(task_t *p)
 		prio = MAX_RT_PRIO;
 	if (prio > MAX_PRIO-1)
 		prio = MAX_PRIO-1;
-
-	HW2_NT += (p->prio-prio);	
+		
 	return prio;
 }
 
@@ -314,7 +313,7 @@ static inline void activate_task(task_t *p, runqueue_t *rq)
 		if (p->sleep_avg > MAX_SLEEP_AVG)
 			p->sleep_avg = MAX_SLEEP_AVG;
 		p->prio = effective_prio(p);
-		//will we change the number of tickets here? HW2
+		
 	}
 	enqueue_task(p, array);
 	rq->nr_running++;
@@ -451,7 +450,7 @@ void wake_up_forked_process(task_t * p)
 		current->sleep_avg = current->sleep_avg * PARENT_PENALTY / 100;
 		p->sleep_avg = p->sleep_avg * CHILD_PENALTY / 100;
 		p->prio = effective_prio(p);
-		//will we change the number of tickets here? HW2
+		
 	}
 	p->cpu = smp_processor_id();
 	activate_task(p, rq);
@@ -834,18 +833,27 @@ void scheduler_tick(int user_tick, int system)
 		p->sleep_avg--;
 	if (!--p->time_slice) {
 		dequeue_task(p, rq->active);
+
+		
 		set_tsk_need_resched(p);
 		p->prio = effective_prio(p);
-		//will we change the number of tickets here? HW2
 		p->first_time_slice = 0;
+		//making sure process goes back to active if LOTTERY is on HW2
+		if(p->policy==SCHED_LOTTERY){
+			p->time_slice = MAX_TIMESLICE;
+			enqueue_task(p,rq->active);
+		}else{
 		p->time_slice = TASK_TIMESLICE(p);
 
+
 		if (!TASK_INTERACTIVE(p) || EXPIRED_STARVING(rq)) {
+			
 			if (!rq->expired_timestamp)
 				rq->expired_timestamp = jiffies;
 			enqueue_task(p, rq->expired);
 		} else
 			enqueue_task(p, rq->active);
+		}
 	}
 out:
 #if CONFIG_SMP
@@ -1206,6 +1214,7 @@ static int setscheduler(pid_t pid, int policy, struct sched_param *param)
 
 	if (!param || pid < 0)
 		goto out_nounlock;
+	//checking that the LOTTERY policy is off HW2
 	if(find_process_by_pid(pid)->policy == SCHED_LOTTERY)
 		goto out_nounlock;	
 
@@ -2053,12 +2062,17 @@ int sys_start_orig_scheduler(){
 	
 	if(p->policy != SCHED_LOTTERY)
 		return -EINVAL;
+	
 	rq=this_rq();//check if lock
+	spin_lock_irq(rq->lock);
 	rq->expired_timestamp = 0;
 	for_each_task(p){
 		p->policy = p->prev_policy;
 		p->time_slice = TASK_TIMESLICE(p);
 	}
+	spin_unlock_irq(rq->lock);
+
+	schedule();
 	//TODO check for unlock
 	return 0;
 }
@@ -2068,10 +2082,16 @@ void sys_set_max_tickets(int max_tickets){
 
 int sys_start_lottery_scheduler()
 {
+	runqueue_t *rq;
+    prio_array_t *array;
+    list_t* our_list , *pos, *n;
+	task_t* next;
+    int idx;
+	rq = this_rq();
 	task_t* p = current;
 	if (p->policy == SCHED_LOTTERY)
             return -EINVAL;
-      //TODO HW2 locks where needed!  
+	spin_lock_irq(rq->lock);
     for_each_task(p)
     {
         
@@ -2079,12 +2099,7 @@ int sys_start_lottery_scheduler()
         p->policy=SCHED_LOTTERY;
         p->time_slice=MAX_TIMESLICE;
     }
-    runqueue_t *rq;
-    prio_array_t *array;
-    list_t* our_list , *pos, *n;
-	task_t* next;
-    int idx;
-	rq = this_rq();
+    
     array = rq->expired;
 
 	while(array->nr_active != 0){
@@ -2096,9 +2111,11 @@ int sys_start_lottery_scheduler()
 	next = list_entry(pos->next, task_t, run_list);
 	dequeue_task(next, rq->expired);
 	enqueue_task(next, rq->active);
+		}
 	}
+	spin_unlock_irq(rq->lock);
     schedule();
-	}
+	
     return 0;
 }
 

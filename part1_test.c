@@ -14,10 +14,7 @@
 
 bool test_enable_logging() {
 	// size < 0
-	printf("blabla");
-	int xx=enable_logging(-3);
-	printf("res=%d",xx);
-	printf("res=%d", errno);
+
 
 	ASSERT_TEST(enable_logging(-3) == -1);
 	ASSERT_TEST(errno == EINVAL);
