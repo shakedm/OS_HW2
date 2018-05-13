@@ -925,7 +925,9 @@ pick_next_task:
 	}
 	//here we need to change the way the next task is chosed HW2
 	if(current->policy == SCHED_LOTTERY){
+		printk("before task is %d\n",next->pid);
 		next = winning_task(HW2_get_random());
+		printk("after next is %d and NT is %d\n",next->pid,HW2_NT);
 	}else{
 	idx = sched_find_first_bit(array->bitmap);
 	queue = array->queue + idx;
@@ -2057,23 +2059,32 @@ int HW2_get_random()
 }
 int sys_start_orig_scheduler(){
 	task_t* p = current;
-	runqueue_t* rq;
+	runqueue_t* rq = this_rq_lock();
+	if(p->policy == SCHED_LOTTERY){
+		printk("this should change all HW2\n");
+	}
+	else{
+		printk("policy is %s",p->policy);
+	}
 
-	
-	if(p->policy != SCHED_LOTTERY)
+	if(p->policy != SCHED_LOTTERY){
+		spin_unlock(&rq->lock);
+		printk("maybe the lock?\n");
 		return -EINVAL;
-	
-	rq=this_rq();//check if lock
-	spin_lock_irq(rq->lock);
+	}
+	printk("HW2 line 1\n");
 	rq->expired_timestamp = 0;
 	for_each_task(p){
+		printk("HW2 line 2 (loop)\n");
+		printk("p PID:%d",p->pid);
 		p->policy = p->prev_policy;
 		p->time_slice = TASK_TIMESLICE(p);
 	}
-	spin_unlock_irq(rq->lock);
-
+	printk("sys_orig\n");
+	spin_unlock(&rq->lock);
+	printk("HW2 line 3 finish\n");
 	schedule();
-	//TODO check for unlock
+	
 	return 0;
 }
 void sys_set_max_tickets(int max_tickets){
@@ -2082,38 +2093,48 @@ void sys_set_max_tickets(int max_tickets){
 
 int sys_start_lottery_scheduler()
 {
-	runqueue_t *rq;
+	
     prio_array_t *array;
     list_t* our_list , *pos, *n;
 	task_t* next;
-    int idx;
-	rq = this_rq();
+    int idx,i;
+//i is for debugging	
 	task_t* p = current;
 	if (p->policy == SCHED_LOTTERY)
             return -EINVAL;
-	spin_lock_irq(rq->lock);
+	runqueue_t* rq=this_rq_lock();
+
     for_each_task(p)
     {
-        
+    
 		p->prev_policy = p->policy;
         p->policy=SCHED_LOTTERY;
+		printk("after change task PID:%d , task policy:%d\n",p->pid ,p->policy);
+		printk("and the priority is %d\n",p->prio);
         p->time_slice=MAX_TIMESLICE;
     }
-    
+	array=rq->active;
+    for(i=0;i<MAX_PRIO ;i++){
+		printk("i is %d\n",i);
+		printk("nr of tasks in queue %d is:%d",i ,array[i].nr_run_per_list);
+	}
     array = rq->expired;
-
+	printk("num expired is:%d\n",array->nr_active);
 	while(array->nr_active != 0){
     
     idx = sched_find_first_bit(array->bitmap);
     our_list = array->queue +idx;
 	
     list_for_each_safe(pos,n,our_list){ 
+		printk("HW2\n");
 	next = list_entry(pos->next, task_t, run_list);
+	printk("task is %d\n",next->pid);
 	dequeue_task(next, rq->expired);
 	enqueue_task(next, rq->active);
 		}
 	}
-	spin_unlock_irq(rq->lock);
+	printk("or sys_lottery?\n");
+	spin_unlock(&rq->lock);
     schedule();
 	
     return 0;
@@ -2140,7 +2161,7 @@ task_t* winning_task(int num){
 	runqueue_t* rq;
 	prio_array_t* array;
 	list_t* our_list;
-	rq = this_rq();
+	rq = this_rq_lock();
 	array = rq->active;
 	int sum=0;
 	int idx, prio, i;
@@ -2159,6 +2180,7 @@ task_t* winning_task(int num){
 			sum+=prio;
 		}
 	}
+	spin_unlock(&rq->lock);
 	return list_entry(our_list,task_t,run_list);
 
 }

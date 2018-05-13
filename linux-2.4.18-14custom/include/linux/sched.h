@@ -458,7 +458,7 @@ struct task_struct {
 	void *journal_info;
 
 	//HW2 field
-	int prev_policy;
+	unsigned long prev_policy;
 };
 
 /*
