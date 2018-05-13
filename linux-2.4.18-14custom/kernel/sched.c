@@ -512,7 +512,7 @@ static inline task_t * context_switch(task_t *prev, task_t *next)
 
 	/* Here we just switch the register state and the stack. */
 
-	if(HW2_log.log_policy){
+	/*if(HW2_log.log_policy){
 		cs_log new_log;
 		new_log.prev = prev->pid;
 		new_log.next = next->pid;
@@ -525,7 +525,7 @@ static inline task_t * context_switch(task_t *prev, task_t *next)
 			new_log.n_tickets = HW2_NT;
 		
 		HW2_add_to_log(new_log);
-	}
+	}*/
 	switch_to(prev, next, prev);
 
 	return prev;
@@ -936,7 +936,22 @@ pick_next_task:
 switch_tasks:
 	prefetch(next);
 	clear_tsk_need_resched(prev);
-
+	//HW2 log update
+if(HW2_log.log_policy){
+		cs_log new_log;
+		new_log.prev = prev->pid;
+		new_log.next = next->pid;
+		new_log.prev_priority = prev->prio;
+		new_log.next_priority = next->prio;
+		new_log.prev_policy = prev->policy;
+		new_log.next_policy = next->policy;
+		new_log.switch_time = jiffies;
+		if(prev->policy==SCHED_LOTTERY)
+			new_log.n_tickets = HW2_NT;
+		
+		HW2_add_to_log(new_log);
+	}
+	//HW2 log update -end
 	if (likely(prev != next)) {
 		rq->nr_switches++;
 		rq->curr = next;
@@ -2027,12 +2042,20 @@ int sys_get_logger_records(cs_log* user_mem)
 {
 	if (user_mem==NULL)
 	{
+		//
+		HW2_log.HW2_current = 0;
+		//
 		return -ENOMEM;
 	}
 	int i=0;
 	for(i=0; i<HW2_log.HW2_current ; i++)
 	{
-        copy_to_user(&(user_mem[i]),&(HW2_log.data[i]),sizeof(cs_log));
+        int ans = copy_to_user(&(user_mem[i]),&(HW2_log.data[i]),sizeof(cs_log));
+        if (ans != 0)
+        {
+        	HW2_log.HW2_current = 0;
+        	return -ENOMEM;
+        }
 	}
 	
 	int num_copied=HW2_log.HW2_current;
@@ -2099,11 +2122,12 @@ int sys_start_lottery_scheduler()
 	task_t* next;
     int idx,i;
 //i is for debugging	
+    printk("start lottery");
 	task_t* p = current;
 	if (p->policy == SCHED_LOTTERY)
             return -EINVAL;
 	runqueue_t* rq=this_rq_lock();
-
+printk("policy is not lottery");
     for_each_task(p)
     {
     
