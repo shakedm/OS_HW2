@@ -21,17 +21,17 @@ bool test_start_lottery_orig_scheduler() {
 
   	disable_logging();
    	start_orig_scheduler();
+	printf("not even once ahh?\n");
 	ASSERT_TEST(start_lottery_scheduler() == 0);
-
+	printf("ok so once\n");
 	struct sched_param param;
 	param.sched_priority = 30;
 	ASSERT_TEST(sched_setscheduler(getpid(), SCHED_OTHER, &param) == -1);
 	ASSERT_TEST(sched_setscheduler(getpid(), SCHED_FIFO, &param) == -1);
 	ASSERT_TEST(sched_setscheduler(getpid(), SCHED_RR, &param) == -1);
 	ASSERT_TEST(sched_setscheduler(getpid(), SCHED_LOTTERY, &param) == -1);
-
 	ASSERT_TEST(start_lottery_scheduler() == -1 && errno == EINVAL);
-	printf("just some faults tests\n");
+	
 	ASSERT_TEST(start_orig_scheduler() == 0);
 
 	ASSERT_TEST(sched_setscheduler(getpid(), SCHED_LOTTERY, &param) == -1);
@@ -40,7 +40,7 @@ bool test_start_lottery_orig_scheduler() {
 	int i = 0;
 	int user_mem[3] = {0, 0, 0};
 	for (i = 0; i < TEST_SIZE; i++) {
-		printf("THAT IS AS FAR AS YOU GO FUCKER\n");
+		printf("THAT IS AS FAR AS YOU GO FUCKER %d\n",i);
 		ASSERT_TEST(start_lottery_scheduler() == 0);
 		ASSERT_TEST(start_lottery_scheduler() == -1 && errno == EINVAL);
 		ASSERT_TEST(start_orig_scheduler() == 0);
