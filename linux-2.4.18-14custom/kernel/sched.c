@@ -870,7 +870,7 @@ void scheduling_functions_start_here(void) { }
  */
 asmlinkage void schedule(void)
 {
-	task_t *prev, *next;
+	task_t *prev, *next, *p;
 	runqueue_t *rq;
 	prio_array_t *array;
 	list_t *queue;
@@ -925,14 +925,15 @@ pick_next_task:
 	}
 	//here we need to change the way the next task is chosed HW2
 	if(current->policy == SCHED_LOTTERY){
+		p=current;
 		printk("before task is %d and NT is %d\n",prev->pid, HW2_NT);
 		next = winning_task(HW2_get_random());
-		printk("after next is %d and NT is %d\n",next->pid,HW2_NT);
-		for_each_task(next){
-			if(next->array!= NULL){
-				prink("task is %d and prio is %d and tickets are %d \n",next->pid, next->prio, MAX_PRIO-next->prio);
-			}
+		for_each_task(p){
+			if(p->array!=NULL)
+			printk("PID is %d task prio is %d and tickets are %d\n",p->pid,p->prio,MAX_PRIO-p->prio );
 		}
+		printk("after next is %d and NT is %d\n",next->pid,HW2_NT);
+		
 	}else{
 	idx = sched_find_first_bit(array->bitmap);
 	queue = array->queue + idx;
@@ -2098,14 +2099,12 @@ int sys_start_orig_scheduler(){
 		spin_unlock(&rq->lock);
 		return -EINVAL;
 	}
-	printk("HW2 line 1\n");
 	rq->expired_timestamp = 0;
 	for_each_task(p){
 		p->policy = p->prev_policy;
 		p->time_slice = TASK_TIMESLICE(p);
 	}
 	rq_unlock(rq);
-	printk("HW2 line 3 finish\n");
 	schedule();
 	
 	return 0;
@@ -2125,10 +2124,13 @@ int sys_start_lottery_scheduler()
 	if (p->policy == SCHED_LOTTERY)
             return -EINVAL;
 	runqueue_t* rq=this_rq_lock();
-printk("policy is not lottery");
+	//recalculating the NT, cause it gets fucked once on start i think.
+	HW2_NT=0;
+
     for_each_task(p)
     {
-    
+		if(p->array!=NULL)
+			HW2_NT += MAX_PRIO- p->prio;
 		p->prev_policy = p->policy;
         p->policy=SCHED_LOTTERY;
         p->time_slice=MAX_TIMESLICE;
@@ -2152,7 +2154,7 @@ printk("policy is not lottery");
 	}
 	
 	rq_unlock(rq);
-    set_need_resched();
+    schedule();
     return 0;
 }
 
@@ -2187,7 +2189,7 @@ task_t* winning_task(int num){
 		HW2_tickets= (array->nr_run_per_list[i])*(MAX_PRIO-i);
 		if(sum+HW2_tickets>num){
 			our_list= array->queue[i].next;
-			sum+= HW2_tickets;
+			sum+= MAX_PRIO-i;
 			while(sum<num){
 				our_list=our_list->next;
 				sum+=(MAX_PRIO-i);

@@ -21,9 +21,7 @@ bool test_start_lottery_orig_scheduler() {
 
   	disable_logging();
    	start_orig_scheduler();
-	printf("not even once ahh?\n");
 	ASSERT_TEST(start_lottery_scheduler() == 0);
-	printf("ok so once\n");
 	struct sched_param param;
 	param.sched_priority = 30;
 	ASSERT_TEST(sched_setscheduler(getpid(), SCHED_OTHER, &param) == -1);
@@ -40,7 +38,6 @@ bool test_start_lottery_orig_scheduler() {
 	int i = 0;
 	int user_mem[3] = {0, 0, 0};
 	for (i = 0; i < TEST_SIZE; i++) {
-		printf("THAT IS AS FAR AS YOU GO FUCKER %d\n",i);
 		ASSERT_TEST(start_lottery_scheduler() == 0);
 		ASSERT_TEST(start_lottery_scheduler() == -1 && errno == EINVAL);
 		ASSERT_TEST(start_orig_scheduler() == 0);
@@ -62,15 +59,17 @@ bool test_log_lottery() {
 	set_max_tickets(MAX_TICKETS);
 	int child_pid = fork();
 	param.sched_priority = 9; //prio = 90, num_of_tickets = 50
+	printf("parent PID is %d child is %d\n",parent_pid, child_pid);
 	sched_setscheduler(child_pid, SCHED_FIFO, &param);
 	enable_logging(LOG_SIZE);
 	start_lottery_scheduler();
 	//just a triple loop to make the processes run and perform context switches between them :)
 	int i, j, k;
+	unsigned long long t=0;
 	for (i = 0; i < TEST_SIZE; ++i) {
 	   for (j = 0; j < TEST_SIZE; ++j) {
 	      for (k = 0; k < LOG_SIZE; ++k) {
-
+			  t++;
 	      }
 	   }
 	}
@@ -111,6 +110,7 @@ bool test_log_lottery() {
 	   }
 	}
 	float final = ((float)count / LOG_SIZE);
+	printf("final is %f",final);
 	if (!(final <= 0.33 && final >= 0.27)) {
 	   return false;
 	}
