@@ -60,6 +60,8 @@ bool test_log_lottery() {
 	int child_pid = fork();
 	param.sched_priority = 9; //prio = 90, num_of_tickets = 50
 	printf("parent PID is %d child is %d\n",parent_pid, child_pid);
+	//should be if here?? no it works fine without it
+	if(child_pid!=0)
 	sched_setscheduler(child_pid, SCHED_FIFO, &param);
 	enable_logging(LOG_SIZE);
 	start_lottery_scheduler();
@@ -102,7 +104,7 @@ bool test_log_lottery() {
 	   return false;
 	}
 	char line[3];
-	int count = 0;
+	int count = 0, pcount = 0;
 	while (fgets(line, MAXSTRING, stream)) {
 	   if (!strcmp(line, "90 \n")) {
 
@@ -120,7 +122,7 @@ bool test_log_lottery() {
 int main() {
 	disable_logging();
 	start_orig_scheduler();
-	RUN_TEST(test_start_lottery_orig_scheduler);
+	//RUN_TEST(test_start_lottery_orig_scheduler);
 	RUN_TEST(test_log_lottery);
 	return 0;
 }

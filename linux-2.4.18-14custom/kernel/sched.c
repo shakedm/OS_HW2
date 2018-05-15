@@ -928,11 +928,6 @@ pick_next_task:
 		p=current;
 		printk("before task is %d and NT is %d\n",prev->pid, HW2_NT);
 		next = winning_task(HW2_get_random());
-		for_each_task(p){
-			if(p->array!=NULL)
-			printk("PID is %d task prio is %d and tickets are %d\n",p->pid,p->prio,MAX_PRIO-p->prio );
-		}
-		printk("after next is %d and NT is %d\n",next->pid,HW2_NT);
 		
 	}else{
 	idx = sched_find_first_bit(array->bitmap);
@@ -2145,9 +2140,7 @@ int sys_start_lottery_scheduler()
     our_list = array->queue +idx;
 	
     list_for_each_safe(pos,n,our_list){ 
-		printk("HW2\n");
 	next = list_entry(pos->next, task_t, run_list);
-	printk("task is %d\n",next->pid);
 	dequeue_task(next, rq->expired);
 	enqueue_task(next, rq->active);
 		}
@@ -2179,7 +2172,6 @@ task_t* winning_task(int num){
 	runqueue_t* rq;
 	prio_array_t* array;
 	list_t* our_list;
-	task_t* winner_winner_chicken_dinner;
 	rq = this_rq_lock();
 	array = rq->active;
 	int sum=0;
@@ -2201,14 +2193,7 @@ task_t* winning_task(int num){
 		}
 	}
 	spin_unlock(&rq->lock);
-	printk("num is %d ",num);
-
-	printk("winning queue is %d\n",i);
-	printk("in this queue are %d tasks and each hold %d tickets num of total tasks is %d ",array->nr_run_per_list[i],MAX_PRIO-i, rq->nr_running);
-	//wrong task_t or something we cant read
-	winner_winner_chicken_dinner= list_entry(our_list,task_t,run_list);
-	printk("winning task is %d\n",(int)winner_winner_chicken_dinner->pid);
-	//wrong return value
+	
 	return list_entry(our_list,task_t,run_list);
 
 }
