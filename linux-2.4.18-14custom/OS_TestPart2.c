@@ -59,9 +59,6 @@ bool test_log_lottery() {
 	set_max_tickets(MAX_TICKETS);
 	int child_pid = fork();
 	param.sched_priority = 9; //prio = 90, num_of_tickets = 50
-	printf("parent PID is %d child is %d\n",parent_pid, child_pid);
-	//should be if here?? no it works fine without it
-	if(child_pid!=0)
 	sched_setscheduler(child_pid, SCHED_FIFO, &param);
 	enable_logging(LOG_SIZE);
 	start_lottery_scheduler();
@@ -92,6 +89,7 @@ bool test_log_lottery() {
 	   printf("Cannot open stream_log.txt!");
 	}
 	for (i = 0; i < logger_records_size; i++) {
+		//printf("log[%d]: prev = %d, next = %d, prev_priority = %d, next_priority ~%d~, prev_policy = %d, next_policy = %d, n_tickets = %d, switch_time = %d \n\n", i, log[i].prev, log[i].next, log[i].prev_priority, log[i].next_priority, log[i].prev_policy, log[i].next_policy, log[i].n_tickets, log[i].switch_time);
 	  fprintf(stream_log, "Log size: %d\n", logger_records_size);
 	  fprintf(stream_log, "log[%d]: prev = %d, next = %d, prev_priority = %d, next_priority ~%d~, prev_policy = %d, next_policy = %d, n_tickets = %d, switch_time = %d \n\n", i, log[i].prev, log[i].next, log[i].prev_priority, log[i].next_priority, log[i].prev_policy, log[i].next_policy, log[i].n_tickets, log[i].switch_time);
 	   fprintf(stream, "%d \n", log[i].next_priority);
@@ -122,7 +120,7 @@ bool test_log_lottery() {
 int main() {
 	disable_logging();
 	start_orig_scheduler();
-	//RUN_TEST(test_start_lottery_orig_scheduler);
+	RUN_TEST(test_start_lottery_orig_scheduler);
 	RUN_TEST(test_log_lottery);
 	return 0;
 }

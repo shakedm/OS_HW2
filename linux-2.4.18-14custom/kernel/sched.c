@@ -810,8 +810,12 @@ void scheduler_tick(int user_tick, int system)
 		 * RR tasks need a special form of timeslice management.
 		 * FIFO tasks have no timeslices.
 		 */
-		if ((p->policy == SCHED_RR) && !--p->time_slice) {
+		if ((p->policy == SCHED_RR || p->policy == SCHED_LOTTERY) && !--p->time_slice) {
+			if(p->policy == SCHED_LOTTERY)
+			p->time_slice = MAX_TIMESLICE;
+			else
 			p->time_slice = TASK_TIMESLICE(p);
+			
 			p->first_time_slice = 0;
 			set_tsk_need_resched(p);
 
@@ -926,7 +930,7 @@ pick_next_task:
 	//here we need to change the way the next task is chosed HW2
 	if(current->policy == SCHED_LOTTERY){
 		p=current;
-		printk("before task is %d and NT is %d\n",prev->pid, HW2_NT);
+		//printk("before task is %d and NT is %d\n",prev->pid, HW2_NT);
 		next = winning_task(HW2_get_random());
 		
 	}else{
@@ -2133,9 +2137,9 @@ int sys_start_lottery_scheduler()
 	//TODO: check that expired array does really empty
 	
     array = rq->expired;
-	printk("num expired is:%d\n",array->nr_active);
+	//printk("num expired is:%d\n",array->nr_active);
 	while(array->nr_active != 0){
-    printk("there is a task in expired!!!\n");
+    //printk("there is a task in expired!!!\n");
     idx = sched_find_first_bit(array->bitmap);
     our_list = array->queue +idx;
 	
